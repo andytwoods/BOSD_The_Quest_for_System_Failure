@@ -36,8 +36,7 @@ import GlitchBoss from './components/GlitchBoss';
 import BSTFinalBoss from './components/BSTFinalBoss';
 import CustomBossContainer from './components/CustomBossContainer';
 import RegistryWindow from './components/RegistryWindow';
-// Fix: Added X to the lucide-react imports to resolve the error on line 572
-import { ShieldAlert, Crosshair, Zap, User, Loader2, Globe, Skull, Trash2, X } from 'lucide-react';
+import { ShieldAlert, Crosshair, Zap, User, Loader2, Globe, Skull, Trash2, X, Terminal, Cpu } from 'lucide-react';
 
 const getInitialTime = (tier: ComputerTier) => 300;
 
@@ -86,7 +85,74 @@ const INITIAL_ACHIEVEMENTS: Achievement[] = [
   { id: 'bst_neutralized', name: 'The Sensitizer', description: 'Neutralized the BST consciousness', unlocked: false },
 ];
 
+const BiosBoot: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [logs, setLogs] = useState<string[]>([]);
+  const logSteps = [
+    "BIOS v2.04.1 (C) 1998 Legacy Systems",
+    "CPU: HyperThread Core @ 3.4GHz",
+    "Memory Test: 65536K OK",
+    "Detecting Primary Master... HDD-0 OK",
+    "Detecting Secondary Slave... NONE",
+    "Verifying DMI Pool Data... Success",
+    "Loading Kernel.sys...",
+    "Mounting /system/desktop...",
+    "Initializing Graphic UI...",
+    "READY."
+  ];
+
+  useEffect(() => {
+    let currentLog = 0;
+    const interval = setInterval(() => {
+      if (currentLog < logSteps.length) {
+        setLogs(prev => [...prev, logSteps[currentLog]]);
+        currentLog++;
+        setProgress(p => Math.min(100, (currentLog / logSteps.length) * 100));
+      } else {
+        clearInterval(interval);
+        setTimeout(onComplete, 500);
+      }
+    }, 400);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-black z-[999] flex flex-col p-12 font-mono text-gray-300">
+      <div className="flex justify-between border-b border-gray-700 pb-4 mb-8">
+        <div className="flex items-center gap-4">
+          <Terminal className="w-10 h-10 text-white" />
+          <h1 className="text-2xl font-bold tracking-tighter text-white">LEGACY_BOOT_LOADER</h1>
+        </div>
+        <div className="text-right text-xs opacity-50 uppercase">
+          System State: Initializing<br/>
+          Secure Boot: Disabled
+        </div>
+      </div>
+
+      <div className="flex-1 space-y-2 overflow-hidden">
+        {logs.map((log, i) => (
+          <div key={i} className="animate-in fade-in slide-in-from-left-2 duration-300">
+            <span className="text-green-500 mr-2">></span> {log}
+          </div>
+        ))}
+        <div className="animate-pulse">_</div>
+      </div>
+
+      <div className="mt-8 space-y-4">
+        <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-500">
+          <span>Loading Progress</span>
+          <span>{Math.floor(progress)}%</span>
+        </div>
+        <div className="w-full h-4 bg-gray-900 border border-gray-800 rounded-sm overflow-hidden">
+          <div className="h-full bg-white transition-all duration-300" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
+  const [isBooting, setIsBooting] = useState(true);
   const [status, setStatus] = useState<GameStatus>(GameStatus.RUNNING);
   const [appState, setAppState] = useState<AppState>(AppState.CLOSED);
   const [bosdCount, setBosdCount] = useState<number>(0);
@@ -127,7 +193,6 @@ const App: React.FC = () => {
   const [isBinDeleted, setIsBinDeleted] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
 
-  // Visibility states for desktop icons
   const [visibleIcons, setVisibleIcons] = useState({
     readme: true,
     google: true,
@@ -160,6 +225,7 @@ const App: React.FC = () => {
   const [isBosOpen, setIsBosOpen] = useState(false);
   const [customApps, setCustomApps] = useState<CustomApp[]>([]);
   const [activeCustomApp, setActiveCustomApp] = useState<CustomApp | null>(null);
+  const [isDarkWebHubOpen, setIsDarkWebHubOpen] = useState(false);
   
   const [settings, setSettings] = useState<SystemSettings>({
     resetKey: 'Escape',
@@ -191,6 +257,7 @@ const App: React.FC = () => {
       setAnimalTheme(null);
       setAnimalBg(null);
       setCustomApps([]);
+      setPets([]);
       setVisibleIcons({
         readme: true,
         google: true,
@@ -313,9 +380,11 @@ const App: React.FC = () => {
   }, [isInfiniteTimer, timerMultiplier]);
 
   useEffect(() => {
-    startTimer();
+    if (!isBooting) {
+        startTimer();
+    }
     return () => { if (timerRef.current !== null) window.clearInterval(timerRef.current); };
-  }, [startTimer]);
+  }, [startTimer, isBooting]);
 
   const unlockAchievement = (id: string) => {
     setAchievements(prev => prev.map(a => a.id === id ? { ...a, unlocked: true } : a));
@@ -368,6 +437,11 @@ const App: React.FC = () => {
       return;
     }
 
+    // Add boss pet reward
+    if (status === GameStatus.VIRUS_BOSS) setPets(prev => [...prev, { id: Date.now().toString(), type: 'virus', color: 'text-green-500' }]);
+    if (status === GameStatus.INTERNET_BOSS) setPets(prev => [...prev, { id: Date.now().toString(), type: 'internet', color: 'text-blue-400' }]);
+    if (status === GameStatus.GLITCH_BOSS) setPets(prev => [...prev, { id: Date.now().toString(), type: 'glitch', color: 'text-white' }]);
+
     setStatus(GameStatus.WON);
     unlockAchievement('won');
     unlockAchievement('bosd_achieved');
@@ -391,6 +465,10 @@ const App: React.FC = () => {
       setStatus(GameStatus.RUNNING);
     } else if (normalized.includes('pd6')) {
       setIsPD6Open(true);
+    } else if (normalized.includes('arcade')) {
+      setIsArcadeOpen(true);
+    } else if (normalized.includes('youtube')) {
+      setIsYouTubeOpen(true);
     } else if (normalized.includes('registry')) {
       setIsRegistryOpen(true);
     } else if (normalized.includes('cleaner')) {
@@ -428,14 +506,23 @@ const App: React.FC = () => {
 
   return (
     <div className={`w-full h-screen relative overflow-hidden flex flex-col transition-colors duration-1000 ${settings.highContrast ? 'grayscale contrast-200' : ''}`} style={{ backgroundColor: getBackground() }}>
+      
+      {isBooting && <BiosBoot onComplete={() => setIsBooting(false)} />}
+
       {/* Background Decor */}
       {settings.glitchVisuals && (
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] flex flex-wrap gap-2 overflow-hidden select-none">
           {Array.from({ length: 1000 }).map((_, i) => (
-            <span key={i} className="text-[10px] font-mono">0x{Math.random().toString(16).slice(2, 6).toUpperCase()}</span>
+            /* Fix: Removed duplicate key attribute */
+            <span key={`glitch-${i}`} className="text-[10px] font-mono">0x{Math.random().toString(16).slice(2, 6).toUpperCase()}</span>
           ))}
         </div>
       )}
+
+      {/* Pets Layer */}
+      {pets.map(pet => (
+        <DesktopPet key={pet.id} pet={pet} />
+      ))}
 
       {status === GameStatus.RUNNING && (
         <>
@@ -509,6 +596,11 @@ const App: React.FC = () => {
           {isFilesOpen && <FilesApp onClose={() => setIsFilesOpen(false)} onTriggerBST={() => setStatus(GameStatus.BST_FINAL_BOSS)} />}
           {isWorkbenchOpen && <AntivirusWorkbench onClose={() => setIsWorkbenchOpen(false)} collectedParts={collectedParts} bosdCount={bosdCount} onBuild={() => setIsAntivirusActive(true)} />}
           {isRegistryOpen && <RegistryWindow settings={settings} onUpdateSettings={setSettings} onClose={() => setIsRegistryOpen(false)} onFullReset={handleFullReset} onSetDeleteMode={setIsDeleteMode} />}
+          {isNewYearOpen && <NewYearApp onClose={() => setIsNewYearOpen(false)} onCelebrate={() => setStatus(GameStatus.WON)} />}
+          {isArcadeOpen && <ArcadeWindow onClose={() => setIsArcadeOpen(false)} bosdCount={bosdCount} />}
+          {isYouTubeOpen && <YouTubeWindow onClose={() => setIsYouTubeOpen(false)} />}
+          {isAnimateOpen && <AnimateWindow onClose={() => setIsAnimateOpen(false)} bosdCount={bosdCount} isResearcher={achievements.find(a => a.id === 'googled')?.unlocked || false} />}
+          {isPD6Open && <PD6Window onClose={() => setIsPD6Open(false)} bosdCount={bosdCount} onCatch={(type, color) => setPets(prev => [...prev, { id: Date.now().toString(), type, color }])} />}
 
           {hasSearchedPaint && (
             <MSPaint 
@@ -537,6 +629,8 @@ const App: React.FC = () => {
       {status === GameStatus.BST_FINAL_BOSS && <BSTFinalBoss onWin={() => handleWin(100)} onFail={() => setStatus(GameStatus.CRASHED)} />}
       {status === GameStatus.ULTIMATE_VICTORY && <UltimateVictoryScreen onRestart={handleRestart} onFullReset={handleFullReset} onBackToDesktop={() => setStatus(GameStatus.RUNNING)} bosdCount={bosdCount} />}
       {status === GameStatus.CUSTOM_BOSS && activeCustomApp?.bossStats && <CustomBossContainer stats={activeCustomApp.bossStats} icon={activeCustomApp.iconData} onWin={() => handleWin(5)} onFail={() => setStatus(GameStatus.CRASHED)} isBlasterEquipped={isBlasterEquipped} playerDamage={isLogsRecycled ? 100 : 25} />}
+      {status === GameStatus.DSOD_BOSS && <DSODApp onClose={() => setStatus(GameStatus.RUNNING)} onWin={() => handleWin(5)} />}
+      {isDarkWebHubOpen && <DarkWebHub onClose={() => setIsDarkWebHubOpen(false)} onLaunchBoss={(bossStatus) => { setStatus(bossStatus); setIsDarkWebHubOpen(false); }} />}
 
       {/* Popups */}
       {popups.map(p => (
