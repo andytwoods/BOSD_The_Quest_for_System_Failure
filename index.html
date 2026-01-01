@@ -6,21 +6,11 @@
     <title>BOSD: The Quest for System Failure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&family=VT323&display=swap" rel="stylesheet">
-    <!-- Babel standalone for in-browser TSX transpilation -->
     <script src="https://unpkg.com/@babel/standalone@7.26.9/babel.min.js"></script>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #000;
-        }
-        .bosd-font {
-            font-family: 'Segoe UI', sans-serif;
-        }
-        .retro-font {
-            font-family: 'VT323', monospace;
-        }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background-color: #000; }
+        .bosd-font { font-family: 'Segoe UI', sans-serif; }
+        .retro-font { font-family: 'VT323', monospace; }
         @keyframes glitch {
             0% { transform: translate(0); }
             20% { transform: translate(-2px, 2px); }
@@ -29,11 +19,9 @@
             80% { transform: translate(2px, -2px); }
             100% { transform: translate(0); }
         }
-        .glitch-effect {
-            animation: glitch 0.2s infinite;
-        }
+        .glitch-effect { animation: glitch 0.2s infinite; }
     </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@19.0.0",
@@ -49,30 +37,64 @@
 <body>
     <div id="root"></div>
     <script type="text/javascript">
-        // Manual Bootloader: Fetches .tsx as text to bypass MIME type enforcement
-        // then transpiles it using Babel Standalone in the browser.
+        // The Component Loader: Fetches TSX files as text, transpiles them,
+        // and creates a local Blob URL to bypass MIME type enforcement.
+        async function loadComponent(url) {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+            const code = await response.text();
+            
+            // Transpile TSX to JS using Babel
+            const transformed = Babel.transform(code, {
+                presets: ['typescript', 'react'],
+                filename: url
+            }).code;
+
+            // Convert to a Blob URL so the browser treats it as a module
+            const blob = new Blob([transformed], { type: 'application/javascript' });
+            return URL.createObjectURL(blob);
+        }
+
         async function boot() {
             try {
-                const response = await fetch('./index.tsx');
-                if (!response.ok) throw new Error('Failed to fetch index.tsx');
-                const code = await response.text();
+                // 1. Load the main App component
+                const appUrl = await loadComponent('./App.tsx');
                 
-                const transformed = Babel.transform(code, {
+                // 2. Inline index.tsx logic using the transformed App URL
+                const entryCode = `
+                    import React from 'react';
+                    import { createRoot } from 'react-dom/client';
+                    import App from '${appUrl}';
+
+                    const rootElement = document.getElementById('root');
+                    if (rootElement) {
+                        const root = createRoot(rootElement);
+                        root.render(
+                            <React.StrictMode>
+                                <App />
+                            </React.StrictMode>
+                        );
+                    }
+                `;
+
+                const transformedEntry = Babel.transform(entryCode, {
                     presets: ['typescript', 'react'],
-                    filename: 'index.tsx'
+                    filename: 'entry.tsx'
                 }).code;
 
                 const script = document.createElement('script');
                 script.type = 'module';
-                script.text = transformed;
+                script.text = transformedEntry;
                 document.head.appendChild(script);
+
             } catch (err) {
                 console.error('System Boot Failure:', err);
                 document.getElementById('root').innerHTML = `
-                    <div style="color: white; padding: 20px; font-family: monospace;">
-                        <h1 style="color: #ef4444;">BOOT_FAILURE</h1>
-                        <p>${err.message}</p>
-                        <p>GitHub Pages MIME enforcement bypassed... Check Console.</p>
+                    <div style="color: #60a5fa; background: #000; height: 100vh; padding: 40px; font-family: monospace;">
+                        <h1 style="color: #ef4444; font-size: 4rem;">:(</h1>
+                        <h2 style="font-size: 1.5rem; margin-top: 20px;">SYSTEM_BOOT_FAILURE</h2>
+                        <p style="margin-top: 10px; opacity: 0.7;">${err.message}</p>
+                        <p style="margin-top: 40px; font-size: 0.8rem; color: #94a3b8;">Check the browser console for kernel logs.</p>
                     </div>
                 `;
             }

@@ -512,7 +512,7 @@ const App: React.FC = () => {
       {settings.glitchVisuals && (
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] flex flex-wrap gap-2 overflow-hidden select-none">
           {Array.from({ length: 1000 }).map((_, i) => (
-            <span key={`glitch-${i}`} className="text-[10px] font-mono">0x{Math.random().toString(16).slice(2, 6).toUpperCase()}</span>
+            <span key={i} className="text-[10px] font-mono">0x{Math.random().toString(16).slice(2, 6).toUpperCase()}</span>
           ))}
         </div>
       )}
