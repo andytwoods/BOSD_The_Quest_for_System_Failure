@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&family=VT323&display=swap" rel="stylesheet">
     <!-- Babel standalone for in-browser TSX transpilation -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.26.9/babel.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -48,7 +48,36 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- type="text/babel" tells Babel to transpile this. data-type="module" tells it to treat it as ESM. -->
-    <script type="text/babel" data-type="module" src="./index.tsx"></script>
+    <script type="text/javascript">
+        // Manual Bootloader: Fetches .tsx as text to bypass MIME type enforcement
+        // then transpiles it using Babel Standalone in the browser.
+        async function boot() {
+            try {
+                const response = await fetch('./index.tsx');
+                if (!response.ok) throw new Error('Failed to fetch index.tsx');
+                const code = await response.text();
+                
+                const transformed = Babel.transform(code, {
+                    presets: ['typescript', 'react'],
+                    filename: 'index.tsx'
+                }).code;
+
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.text = transformed;
+                document.head.appendChild(script);
+            } catch (err) {
+                console.error('System Boot Failure:', err);
+                document.getElementById('root').innerHTML = `
+                    <div style="color: white; padding: 20px; font-family: monospace;">
+                        <h1 style="color: #ef4444;">BOOT_FAILURE</h1>
+                        <p>${err.message}</p>
+                        <p>GitHub Pages MIME enforcement bypassed... Check Console.</p>
+                    </div>
+                `;
+            }
+        }
+        boot();
+    </script>
 </body>
 </html>
