@@ -1,0 +1,5 @@
+{
+  "name": "BOSD: The Quest for System Failure",
+  "description": "A high-stakes desktop simulation where you must intentionally trigger the Blue Screen of Death (BOSD) within 5 minutes. Face the BOSD boss in an epic showdown to achieve the ultimate system crash before your time runs out.",
+  "requestFramePermissions": []
+}
