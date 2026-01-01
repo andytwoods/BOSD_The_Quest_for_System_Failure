@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameStatus, AppState, Achievement, ComputerTier, Theme, BossPart, CustomApp, SystemSettings } from './types';
 import Desktop from './components/Desktop';
