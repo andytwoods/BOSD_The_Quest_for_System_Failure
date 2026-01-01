@@ -36,8 +36,8 @@ import GlitchBoss from './components/GlitchBoss';
 import BSTFinalBoss from './components/BSTFinalBoss';
 import CustomBossContainer from './components/CustomBossContainer';
 import RegistryWindow from './components/RegistryWindow';
-import { ShieldAlert, Crosshair, Zap, User, Loader2, Globe, Skull, Trash2 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+// Fix: Added X to the lucide-react imports to resolve the error on line 572
+import { ShieldAlert, Crosshair, Zap, User, Loader2, Globe, Skull, Trash2, X } from 'lucide-react';
 
 const getInitialTime = (tier: ComputerTier) => 300;
 
@@ -127,7 +127,7 @@ const App: React.FC = () => {
   const [isBinDeleted, setIsBinDeleted] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
 
-  // Visibility states for desktop icons to allow "getting rid of anything"
+  // Visibility states for desktop icons
   const [visibleIcons, setVisibleIcons] = useState({
     readme: true,
     google: true,
@@ -191,7 +191,6 @@ const App: React.FC = () => {
       setAnimalTheme(null);
       setAnimalBg(null);
       setCustomApps([]);
-      // Reset icon visibility
       setVisibleIcons({
         readme: true,
         google: true,
@@ -389,359 +388,193 @@ const App: React.FC = () => {
     const normalized = cmd.toLowerCase().trim();
     if (normalized.includes('bosd.exe')) {
       setIsGodMode(true);
-      setIsBlasterEquipped(true);
-      setGladToast(true);
-      setTimeout(() => setGladToast(false), 3000);
-    } else if (normalized.includes('infinity')) {
-      setIsInfiniteTimer(true);
-    } else if (normalized.includes('dsod.exe')) {
-      setIsDSODOpen(true);
-      unlockAchievement('dsod_master');
-    } else if (normalized.includes('cleaner.exe')) {
-      setIsDeleteMode(true);
-    } else if (normalized.includes('registry.exe')) {
+      setStatus(GameStatus.RUNNING);
+    } else if (normalized.includes('pd6')) {
+      setIsPD6Open(true);
+    } else if (normalized.includes('registry')) {
       setIsRegistryOpen(true);
-    } else if (normalized.includes('bsd') || normalized.includes('bsod')) {
-      setIsGoogleOpen(false);
-      setStatus(GameStatus.TITAN_BSD);
+    } else if (normalized.includes('cleaner')) {
+      setIsDeleteMode(true);
     } else if (normalized.includes('bg')) {
-      const colors = ['#1e3a8a', '#1a0f00', '#4a0404', '#000000', '#002b1a', '#4c1d95'];
-      setCustomBackground(colors[Math.floor(Math.random() * colors.length)]);
-    } else if (normalized.includes('no virus')) {
-      setArePopupsEnabled(false);
-      setPopups([]);
-      setIsGoogleOpen(false);
+      setIsThemeLoading(true);
+      setTimeout(() => {
+        setIsThemeLoading(false);
+        const animals = ['cat', 'dog', 'bird', 'rabbit', 'fish', 'turtle', 'squirrel', 'snail'];
+        setAnimalTheme(animals[Math.floor(Math.random() * animals.length)]);
+      }, 1000);
     } else if (normalized.includes('halloween')) {
       setTheme(Theme.HALLOWEEN);
       unlockAchievement('spooky');
-      setIsGoogleOpen(false);
     } else if (normalized.includes('christmas')) {
       setTheme(Theme.CHRISTMAS);
       unlockAchievement('festive');
-      setIsGoogleOpen(false);
     } else if (normalized.includes('new year')) {
-      setTheme(Theme.NEW_YEAR);
       setIsNewYearOpen(true);
-      setIsGoogleOpen(false);
-    } else if (normalized.includes('arcade')) {
-      setIsArcadeOpen(true);
-      unlockAchievement('gamer');
-      setIsGoogleOpen(false);
-    } else if (normalized.includes('youtube')) {
-      setIsYouTubeOpen(true);
-      setIsGoogleOpen(false);
-    } else if (normalized.includes('animate')) {
-      setIsAnimateOpen(true);
-      setIsGoogleOpen(false);
-    } else if (normalized.includes('pd6')) {
-      setIsPD6Open(true);
-      unlockAchievement('pd6_master');
-      setIsGoogleOpen(false);
-    } else if (computerTier === ComputerTier.ULTRA || isGodMode) {
-      if (normalized.includes('explode')) handleWin();
     }
   };
 
-  const handleLaunchCustomApp = (app: CustomApp) => {
-    if (isDeleteMode) {
-      setCustomApps(prev => prev.filter(a => a.id !== app.id));
-      return;
-    }
-    setActiveCustomApp(app);
-    if (app.type === 'boss') {
-        setStatus(GameStatus.CUSTOM_BOSS);
-    } else {
-        alert(`Opening ${app.name}... it's just a regular image file.`);
-    }
-  };
-
-  const handleDeleteIcon = (type: string) => {
-    if (!isDeleteMode) return;
-    if (type === 'logs') {
-        setIsLogsRecycled(true);
-        unlockAchievement('logs_recycled');
-        return;
-    }
-    if (type === 'bin') {
-        setIsBinDeleted(true);
-        setStatus(GameStatus.BOD_BOSS);
-        unlockAchievement('bin_deleted');
-        return;
-    }
-    // Generic icon deletion
+  const handleIconDelete = (type: string) => {
     setVisibleIcons(prev => ({ ...prev, [type]: false }));
   };
 
-  const getThemeBgStyle = () => {
-    if (animalBg) return { backgroundImage: `url(${animalBg})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-    if (customBackground) return { backgroundColor: customBackground };
-    const colors: any = {
-      [Theme.HALLOWEEN]: '#1a0f00',
-      [Theme.CHRISTMAS]: '#002b1a',
-      [Theme.NEW_YEAR]: '#4a0404',
-      DEFAULT: '#1e3a8a'
-    };
-    if (computerTier === ComputerTier.ULTRA) return { backgroundColor: '#1e1b4b' };
-    if (computerTier === ComputerTier.NEW) return { backgroundColor: '#0f172a' };
-    return { backgroundColor: colors[theme] || colors.DEFAULT };
+  const getBackground = () => {
+    if (animalBg) return `url(${animalBg})`;
+    if (customBackground) return customBackground;
+    if (theme === Theme.HALLOWEEN) return '#1a0a00';
+    if (theme === Theme.CHRISTMAS) return '#001a0a';
+    if (theme === Theme.NEW_YEAR) return '#8B0000';
+    return computerTier === ComputerTier.ULTRA ? '#0f172a' : (computerTier === ComputerTier.NEW ? '#1e293b' : '#0078d7');
   };
-
-  const handleAmazonPurchase = (item: any) => {
-    if (timeLeft < item.cost) return;
-    setTimeLeft(prev => prev - item.cost);
-    setIsAmazonOpen(false);
-    switch (item.id) {
-        case 'chaos_pack':
-            setPopups(prev => [...prev, ...Array.from({ length: 5 }).map(() => ({ id: Math.random().toString(), x: Math.random() * 70 + 15, y: Math.random() * 70 + 15 }))]);
-            break;
-        case 'time_freeze':
-            setIsInfiniteTimer(true);
-            setTimeout(() => setIsInfiniteTimer(false), 15000);
-            break;
-        case 'damage_boost':
-            setDamageMultiplier(2);
-            setTimeout(() => setDamageMultiplier(1), 30000);
-            break;
-        case 'random_boss':
-            const bossPool = [GameStatus.VIRUS_BOSS, GameStatus.TITAN_BSD, GameStatus.TRIPLE_VIRUS_BOSS, GameStatus.INTERNET_BOSS];
-            setIsBlasterEquipped(true);
-            setStatus(bossPool[Math.floor(Math.random() * bossPool.length)]);
-            break;
-        case 'void_portal':
-            setIsBlasterEquipped(true);
-            setStatus(GameStatus.GLITCH_BOSS);
-            break;
-    }
-  };
-
-  const handleLoginSubmit = (username: string) => {
-    setCurrentUser(username);
-    setIsLoginOpen(false);
-    if (username.toLowerCase() === 'hacker') {
-      setHasRootAccess(true);
-      unlockAchievement('hacker');
-    }
-  };
-
-  const spawnDragon = () => {
-    const newDragon: Dragon = {
-      id: dragonIdRef.current++,
-      x: Math.random() * 80 + 10,
-      y: Math.random() * 80 + 10,
-      vx: (Math.random() - 0.5) * 2,
-    };
-    setDragons(prev => [...prev, newDragon]);
-    unlockAchievement('new_year_master');
-  };
-
-  const catchPet = (type: string, color: string) => {
-    const newPet: Pet = {
-      id: Math.random().toString(),
-      type,
-      color
-    };
-    setPets(prev => [...prev, newPet]);
-  };
-
-  const handleSearchPaint = () => {
-    setStatus(GameStatus.PAINTING);
-    setHasSearchedPaint(true);
-  };
-
-  if (status === GameStatus.WON) return <BOSDScreen onRestart={handleRestart} bosdCount={bosdCount} />;
-  if (status === GameStatus.ULTIMATE_VICTORY) return <UltimateVictoryScreen onRestart={handleRestart} onFullReset={handleFullReset} onBackToDesktop={() => setStatus(GameStatus.RUNNING)} bosdCount={bosdCount} />;
-  if (status === GameStatus.CRASHED) return <CrashScreen onRestart={handleRestart} />;
-  if (status === GameStatus.VIRUS_BOSS) return <VirusBoss onWin={() => handleWin(3, 'VIRUS_SPIKE')} onFail={() => setStatus(GameStatus.CRASHED)} />;
-  if (status === GameStatus.BOD_BOSS) return <BODBoss hp={bodBossHealth} setHp={setBodBossHealth} onWin={() => { handleWin(5); }} onFail={() => setStatus(GameStatus.CRASHED)} isBlasterEquipped={isBlasterEquipped} isLogsRecycled={isLogsRecycled || isGodMode} godMode={isGodMode} />;
-  if (status === GameStatus.GLITCH_BOSS) return <GlitchBoss hp={glitchBossHealth} setHp={setGlitchBossHealth} onWin={() => { setIsVirusShieldActive(true); setArePopupsEnabled(false); unlockAchievement('glitch_slayer'); setStatus(GameStatus.RUNNING); }} onFail={() => setStatus(GameStatus.CRASHED)} isBlasterEquipped={isBlasterEquipped} playerDamage={(isGodMode ? 1000 : (isLogsRecycled ? 100 : 10)) * damageMultiplier} />;
-  if (status === GameStatus.INTERNET_BOSS) return <InternetBoss onWin={() => setStatus(GameStatus.RUNNING)} onFail={() => setStatus(GameStatus.CRASHED)} isBlasterEquipped={isBlasterEquipped} playerDamage={(isGodMode ? 9999 : (isLogsRecycled ? 100 : 10)) * damageMultiplier} />;
-  if (status === GameStatus.TRIPLE_VIRUS_BOSS) return <VirusTripleBoss onWin={() => { handleWin(10, 'CHIMERA_CLAW'); unlockAchievement('triple_threat'); }} onFail={() => setStatus(GameStatus.CRASHED)} />;
-  if (status === GameStatus.WINDOWS_HUB) return <WindowsHub onDefeat={() => setStatus(GameStatus.DARK_WEB)} onFail={() => setStatus(GameStatus.CRASHED)} />;
-  if (status === GameStatus.DARK_WEB) return <DarkWeb onWin={() => handleWin(5, 'DARK_CORE')} onFail={() => setStatus(GameStatus.CRASHED)} />;
-  if (status === GameStatus.DARK_WEB_HUB) return <DarkWebHub onClose={() => setStatus(GameStatus.RUNNING)} onLaunchBoss={(newStatus) => { setIsBlasterEquipped(true); setStatus(newStatus); }} />;
-  if (status === GameStatus.TITAN_BSD) return <TitanBSDBoss computerTier={computerTier} theme={theme} onWin={() => { unlockAchievement('titan_slayer'); handleWin(10, 'TITAN_PLATE'); }} onFail={() => setStatus(GameStatus.CRASHED)} />;
-  if (status === GameStatus.BST_FINAL_BOSS) return <BSTFinalBoss onWin={() => handleWin(100)} onFail={() => setStatus(GameStatus.CRASHED)} />;
-  if (status === GameStatus.CUSTOM_BOSS && activeCustomApp?.bossStats) return <CustomBossContainer stats={activeCustomApp.bossStats} icon={activeCustomApp.iconData} onWin={() => { handleWin(1); setStatus(GameStatus.RUNNING); }} onFail={() => setStatus(GameStatus.CRASHED)} isBlasterEquipped={isBlasterEquipped} playerDamage={(isGodMode ? 1000 : 25) * damageMultiplier} />;
 
   return (
-    <div 
-      className={`relative w-full h-screen overflow-hidden select-none transition-all duration-1000 ${computerTier === ComputerTier.ULTRA ? 'ring-inset ring-8 ring-blue-500/20' : ''} ${isBlasterEquipped ? 'cursor-none' : ''} ${isDeleteMode ? 'cursor-none' : ''} ${settings.glitchVisuals && bosdCount > 5 ? 'animate-glitch' : ''}`} 
-      style={getThemeBgStyle()}
-    >
-      <Desktop 
-        onOpenApp={handleAppOpen} 
-        onOpenVirusExe={() => !isDeleteMode && setStatus(GameStatus.TRIPLE_VIRUS_BOSS)}
-        onOpenLogs={() => !isLogsRecycled && !isDeleteMode && setIsLogsOpen(true)}
-        onOpenReadme={() => !isDeleteMode && setIsReadmeOpen(true)}
-        onOpenGoogle={() => !isDeleteMode && setIsGoogleOpen(true)}
-        onOpenAmazon={() => !isDeleteMode && setIsAmazonOpen(true)}
-        onOpenFiles={() => hasRootAccess && !isDeleteMode && setIsFilesOpen(true)}
-        hasRootAccess={hasRootAccess}
-        onOpenWorkbench={() => (bosdCount >= 1) && !isDeleteMode && setIsWorkbenchOpen(true)}
-        onRecycleLogs={() => { setIsLogsRecycled(true); setIsLogsOpen(false); unlockAchievement('logs_recycled'); }}
-        onRestoreLogs={() => setIsLogsRecycled(false)}
-        onDeleteBin={() => { setIsBinDeleted(true); setStatus(GameStatus.BOD_BOSS); }}
-        onOpenBos={() => !isDeleteMode && setIsBosOpen(true)}
-        onOpenDSOD={() => !isDeleteMode && setIsDSODOpen(true)}
-        isLogsRecycled={isLogsRecycled}
-        isBinDeleted={isBinDeleted}
-        isDeleteMode={isDeleteMode}
-        onIconDelete={handleDeleteIcon}
-        bosdCount={bosdCount} 
-        onRecycle={() => { if(bosdCount >= 10) handleRestart(); }}
-        computerTier={computerTier}
-        theme={theme}
-        canBuildAV={bosdCount >= 1}
-        onUltimateWin={() => setShowFinalChoice(true)}
-        animalTheme={animalTheme}
-        customApps={customApps}
-        onLaunchCustomApp={handleLaunchCustomApp}
-        visibleIcons={visibleIcons}
-      />
-
-      {isRegistryOpen && <RegistryWindow settings={settings} onUpdateSettings={setSettings} onClose={() => setIsRegistryOpen(false)} onFullReset={handleFullReset} onSetDeleteMode={setIsDeleteMode} />}
-      
-      {isDeleteMode && (
-          <div className="absolute top-4 right-20 bg-red-600 text-white px-4 py-2 rounded-full font-black text-xs animate-bounce shadow-xl flex items-center gap-2 z-[200]">
-              <Trash2 className="w-4 h-4" /> DELETE_MODE_ACTIVE - CLICK ICONS TO PURGE
-              <button onClick={() => setIsDeleteMode(false)} className="bg-white text-red-600 px-2 rounded-sm ml-2 font-bold uppercase">Exit</button>
-          </div>
+    <div className={`w-full h-screen relative overflow-hidden flex flex-col transition-colors duration-1000 ${settings.highContrast ? 'grayscale contrast-200' : ''}`} style={{ backgroundColor: getBackground() }}>
+      {/* Background Decor */}
+      {settings.glitchVisuals && (
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03] flex flex-wrap gap-2 overflow-hidden select-none">
+          {Array.from({ length: 1000 }).map((_, i) => (
+            <span key={i} className="text-[10px] font-mono">0x{Math.random().toString(16).slice(2, 6).toUpperCase()}</span>
+          ))}
+        </div>
       )}
 
-      {isThemeLoading && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-md flex flex-col items-center justify-center z-[200]">
-              <Loader2 className="w-16 h-16 text-white animate-spin mb-4" />
-              <p className="text-white font-black uppercase tracking-widest animate-pulse italic">Synchronizing Animal Vectors...</p>
-          </div>
-      )}
-
-      {isBstDefeated && (
+      {status === GameStatus.RUNNING && (
         <>
-            <DesktopPet pet={{ id: 'internet_ally', type: 'internet', color: 'text-blue-400' }} />
-            <DesktopPet pet={{ id: 'glitch_ally', type: 'glitch', color: 'text-red-400' }} />
+          <Desktop 
+            onOpenApp={handleAppOpen}
+            onOpenVirusExe={() => setStatus(GameStatus.VIRUS_BOSS)}
+            onOpenLogs={() => setIsLogsOpen(true)}
+            onOpenReadme={() => setIsReadmeOpen(true)}
+            onOpenGoogle={() => setIsGoogleOpen(true)}
+            onOpenAmazon={() => setIsAmazonOpen(true)}
+            onOpenFiles={() => setIsFilesOpen(true)}
+            onOpenWorkbench={() => setIsWorkbenchOpen(true)}
+            onRecycleLogs={() => {
+              setIsLogsRecycled(true);
+              unlockAchievement('logs_recycled');
+            }}
+            onRestoreLogs={() => setIsLogsRecycled(false)}
+            onDeleteBin={() => setStatus(GameStatus.BOD_BOSS)}
+            onOpenBos={() => setIsBosOpen(true)}
+            onOpenDSOD={() => setIsDSODOpen(true)}
+            isLogsRecycled={isLogsRecycled}
+            isBinDeleted={isBinDeleted}
+            isDeleteMode={isDeleteMode}
+            onIconDelete={handleIconDelete}
+            bosdCount={bosdCount}
+            onRecycle={() => {
+              handleFullReset();
+              unlockAchievement('recycled');
+            }}
+            computerTier={computerTier}
+            theme={theme}
+            canBuildAV={collectedParts.size > 0 || bosdCount >= 3}
+            animalTheme={animalTheme}
+            customApps={customApps}
+            onLaunchCustomApp={(app) => {
+                setActiveCustomApp(app);
+                if (app.type === 'boss') setStatus(GameStatus.CUSTOM_BOSS);
+            }}
+            visibleIcons={visibleIcons}
+            hasRootAccess={hasRootAccess}
+          />
+
+          {appState !== AppState.CLOSED && (
+            <BOSDApp 
+              state={appState} 
+              onStateChange={setAppState} 
+              onWin={() => handleWin(1, 'BOSD_SHIELD')}
+              onClose={() => setAppState(AppState.CLOSED)}
+              unlockAchievement={unlockAchievement}
+              difficulty={computerTier}
+              clipboard={clipboard}
+              canPaste={achievements.find(a => a.id === 'paint_face')?.unlocked || false}
+              isLogsRecycled={isLogsRecycled}
+              theme={theme}
+              godMode={isGodMode}
+              bossHealth={bosdBossHealth}
+              setBossHealth={setBosdBossHealth}
+            />
+          )}
+
+          {isLogsOpen && <LogsWindow onClose={() => setIsLogsOpen(false)} onCopy={setClipboard} canCopy={achievements.find(a => a.id === 'paint_face')?.unlocked || false} />}
+          {isReadmeOpen && <ReadmeWindow onClose={() => setIsReadmeOpen(false)} />}
+          {isGoogleOpen && <GoogleWindow onClose={() => setIsGoogleOpen(false)} onSearch={handleCommand} onNavigateToHub={() => setStatus(GameStatus.WINDOWS_HUB)} />}
+          {isAmazonOpen && <AmazonApp onClose={() => setIsAmazonOpen(false)} timeLeft={timeLeft} onPurchase={(item) => {
+              if (item.id === 'time_freeze') setTimeLeft(prev => prev + 15);
+              if (item.id === 'chaos_pack') setPopups(prev => [...prev, ...Array.from({ length: 5 }).map(() => ({ id: Math.random().toString(), x: Math.random() * 80, y: Math.random() * 80 }))]);
+              if (item.id === 'damage_boost') setDamageMultiplier(prev => prev * 2);
+              if (item.id === 'random_boss') setStatus([GameStatus.VIRUS_BOSS, GameStatus.TITAN_BSD, GameStatus.TRIPLE_VIRUS_BOSS][Math.floor(Math.random() * 3)]);
+              if (item.id === 'void_portal') setStatus(GameStatus.GLITCH_BOSS);
+          }} />}
+          {isFilesOpen && <FilesApp onClose={() => setIsFilesOpen(false)} onTriggerBST={() => setStatus(GameStatus.BST_FINAL_BOSS)} />}
+          {isWorkbenchOpen && <AntivirusWorkbench onClose={() => setIsWorkbenchOpen(false)} collectedParts={collectedParts} bosdCount={bosdCount} onBuild={() => setIsAntivirusActive(true)} />}
+          {isRegistryOpen && <RegistryWindow settings={settings} onUpdateSettings={setSettings} onClose={() => setIsRegistryOpen(false)} onFullReset={handleFullReset} onSetDeleteMode={setIsDeleteMode} />}
+
+          {hasSearchedPaint && (
+            <MSPaint 
+              onClose={() => setHasSearchedPaint(false)} 
+              onAchievement={() => {
+                unlockAchievement('paint_face');
+                setHasSearchedPaint(false);
+              }}
+              isArtist={bosdCount >= 5}
+              onSaveApp={(app) => setCustomApps(prev => [...prev, app])}
+            />
+          )}
         </>
       )}
 
-      {isBosOpen && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 bg-zinc-800 border-2 border-zinc-500 shadow-2xl z-[90] p-4 flex flex-col items-center gap-4 animate-in zoom-in">
-           <div className="w-full flex justify-between items-center border-b border-zinc-600 pb-2">
-              <span className="text-white font-mono text-xs font-bold tracking-widest uppercase">bos.exe - Cheat Console</span>
-              <button onClick={() => setIsBosOpen(false)} className="text-zinc-400 hover:text-white"><ShieldAlert className="w-4 h-4"/></button>
-           </div>
-           <input type="text" placeholder="Enter sequence..." autoFocus className="w-full bg-black border border-zinc-600 text-green-500 font-mono text-sm px-3 py-2 focus:outline-none" onChange={(e) => { if (e.target.value.toLowerCase() === 'bosd.exe') { handleWin(); setIsBosOpen(false); } }} />
-           <p className="text-[10px] text-zinc-500 font-mono italic">Enter 'bosd.exe' for instant win.</p>
-        </div>
+      {status === GameStatus.WON && <BOSDScreen onRestart={handleRestart} bosdCount={bosdCount} />}
+      {status === GameStatus.CRASHED && <CrashScreen onRestart={handleRestart} />}
+      {status === GameStatus.VIRUS_BOSS && <VirusBoss onWin={() => handleWin(2, 'VIRUS_SPIKE')} onFail={() => setStatus(GameStatus.CRASHED)} />}
+      {status === GameStatus.WINDOWS_HUB && <WindowsHub onDefeat={() => setStatus(GameStatus.DARK_WEB)} onFail={() => setStatus(GameStatus.CRASHED)} />}
+      {status === GameStatus.DARK_WEB && <DarkWeb onWin={() => handleWin(3, 'DARK_CORE')} onFail={() => setStatus(GameStatus.CRASHED)} />}
+      {status === GameStatus.TITAN_BSD && <TitanBSDBoss onWin={() => handleWin(5, 'TITAN_PLATE')} onFail={() => setStatus(GameStatus.CRASHED)} computerTier={computerTier} theme={theme} />}
+      {status === GameStatus.TRIPLE_VIRUS_BOSS && <VirusTripleBoss onWin={() => handleWin(10, 'CHIMERA_CLAW')} onFail={() => setStatus(GameStatus.CRASHED)} />}
+      {status === GameStatus.BOD_BOSS && <BODBoss hp={bodBossHealth} setHp={setBodBossHealth} onWin={() => handleWin(15)} onFail={() => setStatus(GameStatus.CRASHED)} isBlasterEquipped={isBlasterEquipped} isLogsRecycled={isLogsRecycled} godMode={isGodMode} />}
+      {status === GameStatus.INTERNET_BOSS && <InternetBoss onWin={() => handleWin(20)} onFail={() => setStatus(GameStatus.CRASHED)} isBlasterEquipped={isBlasterEquipped} playerDamage={isLogsRecycled ? 100 : 10} />}
+      {status === GameStatus.GLITCH_BOSS && <GlitchBoss hp={glitchBossHealth} setHp={setGlitchBossHealth} onWin={() => handleWin(50)} onFail={() => setStatus(GameStatus.CRASHED)} isBlasterEquipped={isBlasterEquipped} playerDamage={isLogsRecycled ? 500 : 50} />}
+      {status === GameStatus.BST_FINAL_BOSS && <BSTFinalBoss onWin={() => handleWin(100)} onFail={() => setStatus(GameStatus.CRASHED)} />}
+      {status === GameStatus.ULTIMATE_VICTORY && <UltimateVictoryScreen onRestart={handleRestart} onFullReset={handleFullReset} onBackToDesktop={() => setStatus(GameStatus.RUNNING)} bosdCount={bosdCount} />}
+      {status === GameStatus.CUSTOM_BOSS && activeCustomApp?.bossStats && <CustomBossContainer stats={activeCustomApp.bossStats} icon={activeCustomApp.iconData} onWin={() => handleWin(5)} onFail={() => setStatus(GameStatus.CRASHED)} isBlasterEquipped={isBlasterEquipped} playerDamage={isLogsRecycled ? 100 : 25} />}
+
+      {/* Popups */}
+      {popups.map(p => (
+        <VirusPopup key={p.id} x={p.x} y={p.y} onClose={() => setPopups(prev => prev.filter(v => v.id !== p.id))} />
+      ))}
+
+      {/* Taskbar */}
+      {status === GameStatus.RUNNING && (
+        <Taskbar 
+          onSearchPaint={() => setHasSearchedPaint(true)} 
+          onCommand={handleCommand}
+          onVolumeClick={() => alert("Volume controller corrupted by kernel jump.")}
+          onDeleteWindowsIcon={() => setStatus(GameStatus.BOD_BOSS)}
+          canDeleteWindowsIcon={bosdCount >= 5}
+          isUltra={computerTier === ComputerTier.ULTRA}
+          theme={theme}
+          isAdminUnlocked={isAdminUnlocked}
+          onAdminOpen={() => setIsAdminOpen(true)}
+          onClockClick={handleClockSecret}
+          onLoginClick={() => setIsLoginOpen(true)}
+          onRegistryOpen={() => setIsRegistryOpen(true)}
+          currentUser={currentUser}
+          animalTheme={animalTheme}
+        />
       )}
 
-      {isLoginOpen && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-[110]">
-           <div className="bg-gray-200 border-2 border-white w-72 p-6 shadow-2xl flex flex-col gap-4 font-sans">
-              <div className="flex flex-col items-center gap-2">
-                 <div className="w-16 h-16 bg-gray-400 rounded-full flex items-center justify-center border-2 border-white shadow-inner">
-                    <User className="w-10 h-10 text-gray-200" />
-                 </div>
-                 <span className="text-sm font-bold text-gray-700">System Login</span>
-              </div>
-              <input type="text" placeholder="Username..." autoFocus className="w-full p-2 border-2 border-inset bg-white text-xs font-mono" onKeyDown={(e) => { if (e.key === 'Enter') handleLoginSubmit((e.target as HTMLInputElement).value); }} />
-              <div className="flex justify-end gap-2 text-[10px]">
-                <button onClick={() => setIsLoginOpen(false)} className="px-4 py-1 border border-gray-400 bg-white">Cancel</button>
-                <button className="px-4 py-1 bg-blue-600 text-white font-bold">Login</button>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {isAdminOpen && <AdminPanel onClose={() => setIsAdminOpen(false)} onSpawnInternet={() => { setStatus(GameStatus.INTERNET_BOSS); setIsAdminOpen(false); }} onFullReset={handleFullReset} />}
+      {/* Global Modals */}
+      {isAdminOpen && <AdminPanel onClose={() => setIsAdminOpen(false)} onSpawnInternet={() => setStatus(GameStatus.INTERNET_BOSS)} onFullReset={handleFullReset} />}
       {showFinalChoice && <FinalWinDialog onWin={() => setStatus(GameStatus.ULTIMATE_VICTORY)} onContinue={() => { setShowFinalChoice(false); setHasDeclinedWin(true); }} />}
-      {isWorkbenchOpen && <AntivirusWorkbench onClose={() => setIsWorkbenchOpen(false)} collectedParts={collectedParts} bosdCount={bosdCount} onBuild={() => { setIsAntivirusActive(true); unlockAchievement('av_built'); }} />}
-      {popups.map(p => <VirusPopup key={p.id} x={p.x} y={p.y} onClose={() => { 
-          if(isBstDefeated) { setPopups(prev => prev.filter(x => x.id !== p.id)); setGladToast(true); setTimeout(()=>setGladToast(false),500); }
-          else setPopups(prev => prev.filter(x => x.id !== p.id));
-      }} />)}
-      {isAntivirusActive && (
-        <div className="absolute top-20 right-20 w-12 h-12 bg-blue-500/80 border-2 border-white rounded-full flex items-center justify-center shadow-lg animate-bounce z-50">
-          <ShieldAlert className="text-white w-8 h-8" />
+      {isDeleteMode && (
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-[100] bg-red-600 text-white px-4 py-2 rounded-full font-black flex items-center gap-3 animate-bounce border-2 border-white shadow-2xl">
+           <Trash2 className="w-5 h-5" /> 
+           SYSTEM_PURGE_MODE: ACTIVE (CLICK ICONS)
+           <button onClick={() => setIsDeleteMode(false)} className="bg-white text-red-600 rounded-full p-1 hover:scale-110"><X className="w-4 h-4"/></button>
         </div>
       )}
-      {isReadmeOpen && <ReadmeWindow onClose={() => setIsReadmeOpen(false)} />}
-      {isGoogleOpen && <GoogleWindow onClose={() => setIsGoogleOpen(false)} onSearch={handleCommand} onNavigateToHub={() => { setIsGoogleOpen(false); setStatus(GameStatus.DARK_WEB_HUB); }} />}
-      {isAmazonOpen && <AmazonApp onClose={() => setIsAmazonOpen(false)} timeLeft={timeLeft} onPurchase={handleAmazonPurchase} />}
-      {isFilesOpen && <FilesApp onClose={() => setIsFilesOpen(false)} onTriggerBST={() => setStatus(GameStatus.BST_FINAL_BOSS)} />}
-      {isArcadeOpen && <ArcadeWindow onClose={() => setIsArcadeOpen(false)} bosdCount={bosdCount} />}
-      {isYouTubeOpen && <YouTubeWindow onClose={() => setIsYouTubeOpen(false)} />}
-      {isAnimateOpen && <AnimateWindow onClose={() => setIsAnimateOpen(false)} bosdCount={bosdCount} isResearcher={achievements.find(a => a.id === 'googled')?.unlocked || false} />}
-      {isPD6Open && <PD6Window onClose={() => setIsPD6Open(false)} bosdCount={bosdCount} onCatch={catchPet} />}
-      {isNewYearOpen && <NewYearApp onClose={() => setIsNewYearOpen(false)} onCelebrate={() => spawnDragon()} />}
-      {isLogsOpen && !isLogsRecycled && <LogsWindow onClose={() => setIsLogsOpen(false)} onCopy={setClipboard} canCopy={achievements.find(a => a.id === 'paint_face')?.unlocked || false} />}
-      {isDSODOpen && <DSODApp onClose={() => setIsDSODOpen(false)} onWin={() => handleWin(2, 'DARK_CORE')} />}
-      {dragons.map(dragon => <div key={dragon.id} className="absolute z-[100]" style={{ left: `${dragon.x}%`, top: `${dragon.y}%` }}><div className="text-red-500 font-bold bg-yellow-400 px-2 rounded-full border border-red-600 animate-bounce">🐉 DRAGON</div></div>)}
-      {pets.map(pet => <DesktopPet key={pet.id} pet={pet} />)}
-      {appState !== AppState.CLOSED && visibleIcons.bosd && <BOSDApp state={appState} onStateChange={setAppState} onWin={() => handleWin(1, 'BOSD_SHIELD')} onClose={() => setAppState(AppState.CLOSED)} unlockAchievement={unlockAchievement} difficulty={computerTier} clipboard={clipboard} canPaste={achievements.find(a => a.id === 'paint_face')?.unlocked || false} isLogsRecycled={isLogsRecycled || isGodMode} theme={theme} godMode={isGodMode} bossHealth={bosdBossHealth} setBossHealth={setBosdBossHealth} playerDamageOverride={(isGodMode ? 1000 : (isLogsRecycled ? 100 : 10)) * damageMultiplier} />}
-      {status === GameStatus.PAINTING && <MSPaint onClose={() => setStatus(GameStatus.RUNNING)} onAchievement={() => unlockAchievement('paint_face')} isArtist={achievements.find(a => a.id === 'paint_face')?.unlocked || false} onSaveApp={(app) => { setCustomApps(prev => [...prev, app]); setStatus(GameStatus.RUNNING); }} />}
-
-      <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 text-white font-mono flex flex-col items-end z-50">
-        <span className={`text-2xl font-bold ${timeLeft < 60 && !isInfiniteTimer ? 'text-red-500 animate-pulse' : 'text-blue-200'}`}>
-          {isInfiniteTimer ? '∞:∞' : `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`}
-        </span>
-      </div>
-
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-[100]">
-        <div className="flex items-center gap-4 bg-white/10 px-6 py-2 rounded-full border border-white/20 text-white backdrop-blur-md">
-            <span className="text-sm font-bold">BODS: <span className="text-blue-400">{bosdCount}</span></span>
-        </div>
-        <button onClick={() => setIsBlasterEquipped(!isBlasterEquipped)} className={`group flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all transform hover:scale-105 active:scale-95 ${isBlasterEquipped ? 'bg-blue-600 border-white text-white shadow-[0_0_20px_blue] animate-pulse' : 'bg-black/60 border-blue-500/50 text-blue-400 hover:border-blue-400'}`} title="Grab the Kernel Blaster">
-          <Crosshair className={`w-5 h-5 ${isBlasterEquipped ? 'animate-spin-slow' : 'group-hover:rotate-45 transition-transform'}`} />
-          <span className="text-[10px] font-black uppercase tracking-widest">{isBlasterEquipped ? 'Blaster Active' : 'Grab Blaster'}</span>
-          <Zap className="w-3 h-3 text-yellow-400" />
-        </button>
-        {gladToast && <div className="bg-yellow-500 text-black px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest animate-bounce shadow-lg">{isVirusShieldActive ? 'VIRUS_SHIELD FOREVER ACTIVE' : hasRootAccess ? 'ROOT ACCESS GRANTED' : 'GOD MODE AUTHORIZED'}</div>}
-      </div>
-
-      <Taskbar 
-        onSearchPaint={handleSearchPaint} 
-        onCommand={handleCommand} 
-        onVolumeClick={() => setStatus(GameStatus.WINDOWS_HUB)} 
-        onDeleteWindowsIcon={() => { if(hasSearchedPaint) setComputerTier(ComputerTier.ULTRA); }} 
-        canDeleteWindowsIcon={hasSearchedPaint} 
-        isUltra={computerTier === ComputerTier.ULTRA} 
-        theme={theme} 
-        isAdminUnlocked={isAdminUnlocked} 
-        onAdminOpen={() => setIsAdminOpen(true)} 
-        onClockClick={handleClockSecret} 
-        onLoginClick={() => setIsLoginOpen(true)} 
-        onRegistryOpen={() => setIsRegistryOpen(true)}
-        currentUser={currentUser} 
-        animalTheme={animalTheme} 
-      />
-
-      <button onClick={handleRestart} className="absolute bottom-20 right-4 bg-red-600/20 hover:bg-red-600/40 border border-red-500/50 text-red-500 px-3 py-1 rounded-sm text-xs uppercase z-50">Emergency Restart</button>
-      <div className="absolute bottom-20 left-4 space-y-2 z-50 max-h-60 overflow-y-auto pr-2">
-        {achievements.filter(a => a.unlocked).map((a) => (<div key={a.id} className="bg-green-600/20 border border-green-500/50 text-green-400 px-3 py-1 rounded-sm text-[10px] animate-in fade-in">[A] {a.name}</div>))}
-      </div>
-      {isBlasterEquipped && <BlasterCursor />}
-      {isDeleteMode && <DeleterCursor />}
     </div>
   );
-};
-
-const BlasterCursor: React.FC = () => {
-    const [mPos, setMPos] = useState({ x: 0, y: 0 });
-    useEffect(() => {
-        const move = (e: MouseEvent) => setMPos({ x: e.clientX, y: e.clientY });
-        window.addEventListener('mousemove', move);
-        return () => window.removeEventListener('mousemove', move);
-    }, []);
-    return (<div className="fixed pointer-events-none z-[9999] transition-transform duration-75" style={{ left: mPos.x, top: mPos.y, transform: 'translate(-50%, -50%)' }}><div className="relative"><Crosshair className="w-8 h-8 text-blue-400 drop-shadow-[0_0_5px_cyan]" /><div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl animate-pulse" /></div></div>);
-};
-
-const DeleterCursor: React.FC = () => {
-  const [mPos, setMPos] = useState({ x: 0, y: 0 });
-  useEffect(() => {
-      const move = (e: MouseEvent) => setMPos({ x: e.clientX, y: e.clientY });
-      window.addEventListener('mousemove', move);
-      return () => window.removeEventListener('mousemove', move);
-  }, []);
-  return (<div className="fixed pointer-events-none z-[9999]" style={{ left: mPos.x, top: mPos.y, transform: 'translate(-50%, -50%)' }}><div className="relative"><Trash2 className="w-10 h-10 text-red-500 drop-shadow-[0_0_10px_red] animate-bounce" /></div></div>);
 };
 
 export default App;

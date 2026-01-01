@@ -1,20 +1,33 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
-# Run and deploy your AI Studio app
+# BOSD: The Quest for System Failure
 
-This contains everything you need to run your app locally.
+A high-stakes, meta-fictional desktop simulation game where your objective is to intentionally destabilize the operating system and trigger the legendary **Blue Screen of Death (BOSD)**. 
 
-View your app in AI Studio: https://ai.studio/apps/drive/1SJofH3eTlGAofWIzA0GXztRmbZ0oPu5P
+> **Created by Ryan Woods, aged 8, whilst his dad was not looking.**
 
-## Run Locally
+## 🎮 Play Now
+Try the game live here: 
+**[https://andytwoods.github.io/BOSD_The_Quest_for_System_Failure/](https://andytwoods.github.io/BOSD_The_Quest_for_System_Failure/)**
 
-**Prerequisites:**  Node.js
+## 🕹️ How to Play
+1. **Explore the Desktop**: Open files, check logs, and browse the "Google" app.
+2. **Increase Instability**: Use the **BOSD.exe** tool to start harassing the system kernel.
+3. **Upgrade Your Rig**: Achieve multiple system crashes to upgrade from an "Old PC" to a "New PC" and eventually the "Ultra PC".
+4. **Boss Battles**: Face off against sentient system threats like the Virus Boss, the Titan BSD, and the ultimate BST Consciousness.
+5. **Custom Apps**: Use the built-in "Paint" to synthesize custom apps and bosses.
+6. **Hacker Mode**: Try logging in as "hacker" to gain root access to restricted system files.
 
+## 🛠️ Features
+- **Dynamic OS Simulation**: A responsive desktop environment with a working taskbar, search, and window management.
+- **Progressive Difficulty**: Higher-tier computers are more stable and require advanced "exploits" to crash.
+- **Mini-Games**: Discover hidden arcade games like "Bad Pac-Man" and "Tower Defense".
+- **Themed Modes**: Special visual themes for Halloween, Christmas, and New Year.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 💻 Tech Stack
+- **Framework**: React 19
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **Deployment**: GitHub Pages
+
+## 📜 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -42,6 +42,8 @@ const TitanBSDBoss: React.FC<TitanBSDBossProps> = ({ onWin, onFail, computerTier
   const [googleHijack, setGoogleHijack] = useState(true);
   const [miniBosses, setMiniBosses] = useState<MiniBoss[]>([]);
   const [ultraBalls, setUltraBalls] = useState(3);
+  // Define missing state variable used in render
+  const [isUltraBallActive, setIsUltraBallActive] = useState(false);
   const [lightnings, setLightnings] = useState<LightningStrike[]>([]);
   const [hands, setHands] = useState<Hand[]>([
     { side: 'left', x: 20, y: 30, state: 'floating', targetX: 20 },
@@ -177,6 +179,9 @@ const TitanBSDBoss: React.FC<TitanBSDBossProps> = ({ onWin, onFail, computerTier
     if (ultraBalls > 0 && !googleHijack) {
       setUltraBalls(prev => prev - 1);
       damageBoss(1000);
+      // Toggle active state briefly for visual feedback
+      setIsUltraBallActive(true);
+      setTimeout(() => setIsUltraBallActive(false), 500);
     }
   };
 

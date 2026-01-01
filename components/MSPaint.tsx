@@ -1,7 +1,6 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { X, Eraser, Pen, Palette, Save, Rocket, Sparkles, Loader2 } from 'lucide-react';
-import { GoogleGenAI, Type } from "@google/genai";
 import { CustomApp, BossStats } from '../types';
 
 interface MSPaintProps {
@@ -67,110 +66,57 @@ const MSPaint: React.FC<MSPaintProps> = ({ onClose, onAchievement, isArtist, onS
     }
   };
 
-  const checkAchievement = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
+  const checkAchievement = () => {
     setIsChecking(true);
-    const dataUrl = canvas.toDataURL('image/png');
-    const base64Data = dataUrl.split(',')[1];
-
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: {
-          parts: [
-            { inlineData: { data: base64Data, mimeType: 'image/png' } },
-            { text: "Does this drawing depict a Blue Unhappy Face (colon and open parenthesis like ':(')? Respond ONLY with JSON: { 'isUnhappyFace': boolean }" }
-          ]
-        },
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-                isUnhappyFace: { type: Type.BOOLEAN }
-            },
-            required: ['isUnhappyFace']
-          }
-        }
-      });
-
-      const result = JSON.parse(response.text || '{}');
-      if (result.isUnhappyFace) {
+    // Offline achievement logic: any drawing counts as a secret
+    setTimeout(() => {
         onAchievement();
-      }
-    } catch (error) {
-      console.error("AI check failed", error);
-    } finally {
-      setIsChecking(false);
-    }
+        setIsChecking(false);
+    }, 500);
   };
 
-  const synthesizeApp = async () => {
+  const synthesizeApp = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     setIsSynthesizing(true);
     const dataUrl = canvas.toDataURL('image/png');
-    const base64Data = dataUrl.split(',')[1];
 
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: {
-          parts: [
-            { inlineData: { data: base64Data, mimeType: 'image/png' } },
-            { text: "Analyze this drawing. If it looks like a monster, virus, or creature, describe it as a virus boss. Respond with JSON: { 'isBoss': boolean, 'name': string, 'hp': number, 'speed': 'low'|'med'|'high', 'description': string }. If it is not a creature, set isBoss to false." }
-          ]
-        },
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-                isBoss: { type: Type.BOOLEAN },
-                name: { type: Type.STRING },
-                hp: { type: Type.NUMBER },
-                speed: { type: Type.STRING, description: 'low, med, or high' },
-                description: { type: Type.STRING }
-            },
-            required: ['isBoss', 'name', 'hp', 'speed', 'description']
-          }
-        }
-      });
+    // Offline synthesis logic: Randomly pick from a few boss templates
+    setTimeout(() => {
+      const bossTemplates = [
+        { name: "Glitch_Monster.exe", hp: 1200, speed: 'med', desc: "A creature born from bad pixels." },
+        { name: "Kernel_Spider.bin", hp: 800, speed: 'high', desc: "Crawls through your system files." },
+        { name: "Buffer_Titan.sys", hp: 3000, speed: 'low', desc: "Heavily armored data sludge." },
+        { name: "Pixel_Ghost.pkg", hp: 500, speed: 'high', desc: "Now you see it, now you don't." }
+      ];
 
-      const data = JSON.parse(response.text || '{}');
+      const template = bossTemplates[Math.floor(Math.random() * bossTemplates.length)];
       const newApp: CustomApp = {
         id: Date.now().toString(),
-        name: data.name || 'Untitled.exe',
-        type: data.isBoss ? 'boss' : 'image',
+        name: template.name,
+        type: 'boss',
         iconData: dataUrl,
-        bossStats: data.isBoss ? {
-            hp: data.hp || 1000,
-            maxHp: data.hp || 1000,
-            name: data.name,
-            speed: data.speed as any || 'med',
+        bossStats: {
+            hp: template.hp,
+            maxHp: template.hp,
+            name: template.name,
+            speed: template.speed as any,
             projectileType: 'custom',
-            description: data.description
-        } : undefined
+            description: template.desc
+        }
       };
 
       onSaveApp(newApp);
-    } catch (error) {
-      console.error("Synthesis failed", error);
-    } finally {
       setIsSynthesizing(false);
-    }
+    }, 1500);
   };
 
   return (
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[500px] bg-[#dfdfdf] border-2 border-white border-r-gray-500 border-b-gray-500 shadow-xl z-[60] flex flex-col font-sans">
       <div className="bg-[#000080] text-white p-1 flex justify-between items-center cursor-move">
         <span className="text-xs px-2 font-bold flex items-center gap-2">
-            <Palette className="w-3 h-3" /> System Paint - {isArtist ? 'Artist Edition' : 'Standard'}
+            <Palette className="w-3 h-3" /> System Paint - Simulation Engine
         </span>
         <button onClick={onClose} className="bg-[#dfdfdf] text-black px-1 leading-none border border-white border-r-gray-800 border-b-gray-800 hover:bg-gray-300">
           <X className="w-4 h-4" />
@@ -224,7 +170,7 @@ const MSPaint: React.FC<MSPaintProps> = ({ onClose, onAchievement, isArtist, onS
                 </button>
             ) : (
                 <span className="text-[10px] text-blue-800 font-bold uppercase flex items-center gap-1">
-                    <Sparkles className="w-3 h-3"/> Artist Unlocked
+                    <Sparkles className="w-3 h-3"/> Simulation Unlocked
                 </span>
             )}
         </div>

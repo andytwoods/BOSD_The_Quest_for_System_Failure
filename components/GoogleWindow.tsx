@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { X, Search, Globe, ChevronLeft, ChevronRight, RotateCcw, ImageIcon, Loader2 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 
 interface GoogleWindowProps {
   onClose: () => void;
@@ -14,65 +13,45 @@ const GoogleWindow: React.FC<GoogleWindowProps> = ({ onClose, onSearch, onNaviga
   const [searchResult, setSearchResult] = useState<{ image: string; text: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const performAISearch = async (searchTerm: string) => {
+  const performLocalSearch = (searchTerm: string) => {
     setIsLoading(true);
     setSearchResult(null);
 
-    // Navigation triggers
-    const hubTerms = ['virus', 'dark web', 'hacker', 'deep web', 'illegal', 'malware'];
-    if (hubTerms.some(term => searchTerm.includes(term))) {
-      onNavigateToHub();
-      setIsLoading(false);
-      return;
-    }
+    // Hardcoded responses for key terms
+    const database: Record<string, {text: string, image: string}> = {
+      'virus': { text: "DANGER! Malicious scripts detected in sector 7. Redirecting to Virus Hub...", image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=200&h=200&fit=crop" },
+      'dark web': { text: "Loading Shadow-Net Marketplace. Please hide your IP address.", image: "https://images.unsplash.com/photo-1510511459019-5dee592d8892?w=200&h=200&fit=crop" },
+      'hacker': { text: "Root access requested. Are you sure you are the Architect?", image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=200&h=200&fit=crop" },
+      'blue': { text: "The color of the end. The color of the beginning. :( ", image: "https://images.unsplash.com/photo-1557683316-973673baf926?w=200&h=200&fit=crop" },
+      'ryan': { text: "Author identified: Ryan Woods. Age 8. Clearance: GOD_MODE_PENDING.", image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=200&h=200&fit=crop" },
+      'dad': { text: "Target: Father. Status: Unaware of current system breach. Proceed with caution.", image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop" }
+    };
 
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      
-      // 1. Generate text description
-      const textResponse = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `The user searched for "${searchTerm}" on a 2000s era computer game about breaking the OS. Provide a short, 1-2 sentence snarky or system-themed description of this search result.`,
-      });
-
-      // 2. Generate image
-      const imageResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [{ text: `A lo-fi, slightly glitched digital illustration of ${searchTerm} in a retro tech style.` }]
-        },
-        config: {
-          imageConfig: { aspectRatio: "1:1" }
-        }
-      });
-
-      let imageData = "";
-      for (const part of imageResponse.candidates[0].content.parts) {
-        if (part.inlineData) {
-          imageData = `data:image/png;base64,${part.inlineData.data}`;
-          break;
-        }
+    setTimeout(() => {
+      const hubTerms = ['virus', 'dark web', 'hacker', 'deep web', 'illegal', 'malware'];
+      if (hubTerms.some(term => searchTerm.includes(term))) {
+        onNavigateToHub();
+        setIsLoading(false);
+        return;
       }
 
-      setSearchResult({
-        text: textResponse.text || "No description found in kernel logs.",
-        image: imageData
-      });
-    } catch (error) {
-      console.error("AI Search failed:", error);
-      setSearchResult({
-        text: "Connection refused. Search index is corrupted. Try searching 'dark web' instead.",
-        image: ""
-      });
-    } finally {
+      const found = Object.keys(database).find(key => searchTerm.includes(key));
+      if (found) {
+        setSearchResult(database[found]);
+      } else {
+        setSearchResult({
+          text: `Found 0 results for "${searchTerm}". The system is too broken to index this data. Try searching "virus".`,
+          image: "https://images.unsplash.com/photo-1484417894907-623942c8ee29?w=200&h=200&fit=crop"
+        });
+      }
       setIsLoading(false);
-    }
+    }, 800);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      performAISearch(query.toLowerCase().trim());
+      performLocalSearch(query.toLowerCase().trim());
       onSearch(query.toLowerCase().trim());
     }
   };
@@ -86,7 +65,7 @@ const GoogleWindow: React.FC<GoogleWindowProps> = ({ onClose, onSearch, onNaviga
                 <div className="w-3 h-3 rounded-full bg-yellow-400" />
                 <div className="w-3 h-3 rounded-full bg-green-400" />
             </div>
-            <span className="text-[10px] text-gray-600 font-bold ml-2">Google - System Browser</span>
+            <span className="text-[10px] text-gray-600 font-bold ml-2">Google - Simulation Browser</span>
         </div>
         <button onClick={onClose} className="p-1 hover:bg-gray-300 rounded transition-colors text-gray-600">
           <X className="w-4 h-4" />
@@ -125,7 +104,7 @@ const GoogleWindow: React.FC<GoogleWindowProps> = ({ onClose, onSearch, onNaviga
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full h-12 border border-gray-200 rounded-full px-12 text-sm focus:outline-none focus:shadow-lg focus:border-transparent transition-all"
-                placeholder="Search Google or type a URL"
+                placeholder="Search Ryan, Virus, or BOSD..."
                 autoFocus
               />
               <div className="flex justify-center mt-6 gap-3">
@@ -142,7 +121,7 @@ const GoogleWindow: React.FC<GoogleWindowProps> = ({ onClose, onSearch, onNaviga
         {isLoading && (
           <div className="flex-1 flex flex-col items-center justify-center space-y-4">
             <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
-            <p className="text-sm font-mono text-gray-400 animate-pulse">Consulting global search indexes...</p>
+            <p className="text-sm font-mono text-gray-400 animate-pulse">Consulting local cache indexes...</p>
           </div>
         )}
 
@@ -159,14 +138,14 @@ const GoogleWindow: React.FC<GoogleWindowProps> = ({ onClose, onSearch, onNaviga
             </form>
 
             <div className="border-b border-gray-100 pb-2">
-              <p className="text-xs text-gray-500">About 133,700,000 results (0.42 seconds)</p>
+              <p className="text-xs text-gray-500">About 133,700,000 results (0.02 seconds)</p>
             </div>
 
             <div className="flex gap-6">
               <div className="flex-1 space-y-4">
                 <div className="space-y-1">
-                  <h3 className="text-blue-700 text-lg hover:underline cursor-pointer font-medium">{query.charAt(0).toUpperCase() + query.slice(1)} - Official System Result</h3>
-                  <p className="text-xs text-green-800">https://sys.os.kernel/{query.replace(' ', '_')}</p>
+                  <h3 className="text-blue-700 text-lg hover:underline cursor-pointer font-medium">{query.charAt(0).toUpperCase() + query.slice(1)} - Local Cache Result</h3>
+                  <p className="text-xs text-green-800">https://local.cache.sys/{query.replace(' ', '_')}</p>
                   <p className="text-sm text-gray-700 leading-relaxed">{searchResult.text}</p>
                 </div>
               </div>
@@ -177,16 +156,6 @@ const GoogleWindow: React.FC<GoogleWindowProps> = ({ onClose, onSearch, onNaviga
                 </div>
               )}
             </div>
-            
-            <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded flex gap-4 items-center">
-                <div className="bg-yellow-400 p-2 rounded">
-                    <ImageIcon className="w-5 h-5 text-yellow-900" />
-                </div>
-                <div className="space-y-1">
-                    <p className="text-xs font-bold text-yellow-900 uppercase">System Generated Visual</p>
-                    <p className="text-[10px] text-yellow-800">Gemini 2.5 has synthesized a digital representation of your query.</p>
-                </div>
-            </div>
           </div>
         )}
       </div>
@@ -194,7 +163,7 @@ const GoogleWindow: React.FC<GoogleWindowProps> = ({ onClose, onSearch, onNaviga
       <div className="bg-gray-100 p-3 text-[9px] text-gray-500 flex justify-center gap-6 border-t border-gray-200">
         <span>Advertising</span>
         <span>Business</span>
-        <span>How Search works</span>
+        <span>Offline Mode Active</span>
         <span>Privacy</span>
         <span>Terms</span>
         <span>Settings</span>
