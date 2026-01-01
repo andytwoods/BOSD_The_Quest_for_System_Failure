@@ -126,6 +126,20 @@ const App: React.FC = () => {
   const [isLogsRecycled, setIsLogsRecycled] = useState(false);
   const [isBinDeleted, setIsBinDeleted] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+
+  // Visibility states for desktop icons to allow "getting rid of anything"
+  const [visibleIcons, setVisibleIcons] = useState({
+    readme: true,
+    google: true,
+    amazon: true,
+    files: true,
+    workbench: true,
+    bosd: true,
+    bos_terminal: true,
+    dsod: true,
+    virus: true,
+  });
+
   const [gladToast, setGladToast] = useState(false);
   const [hasSearchedPaint, setHasSearchedPaint] = useState(false);
   const [theme, setTheme] = useState<Theme>(Theme.NORMAL);
@@ -177,18 +191,28 @@ const App: React.FC = () => {
       setAnimalTheme(null);
       setAnimalBg(null);
       setCustomApps([]);
+      // Reset icon visibility
+      setVisibleIcons({
+        readme: true,
+        google: true,
+        amazon: true,
+        files: true,
+        workbench: true,
+        bosd: true,
+        bos_terminal: true,
+        dsod: true,
+        virus: true,
+      });
       handleRestart();
     }
   }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Custom reset key logic
       if (e.key === settings.resetKey) {
         handleFullReset();
         return;
       }
-
       if (e.key === '9') {
         setStatus(GameStatus.BST_FINAL_BOSS);
         return;
@@ -433,11 +457,19 @@ const App: React.FC = () => {
 
   const handleDeleteIcon = (type: string) => {
     if (!isDeleteMode) return;
-    switch (type) {
-      case 'logs': setIsLogsRecycled(true); break;
-      case 'bin': setIsBinDeleted(true); break;
-      // Add more specific icon deletions if needed
+    if (type === 'logs') {
+        setIsLogsRecycled(true);
+        unlockAchievement('logs_recycled');
+        return;
     }
+    if (type === 'bin') {
+        setIsBinDeleted(true);
+        setStatus(GameStatus.BOD_BOSS);
+        unlockAchievement('bin_deleted');
+        return;
+    }
+    // Generic icon deletion
+    setVisibleIcons(prev => ({ ...prev, [type]: false }));
   };
 
   const getThemeBgStyle = () => {
@@ -482,7 +514,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Fixed Missing Handlers
   const handleLoginSubmit = (username: string) => {
     setCurrentUser(username);
     setIsLoginOpen(false);
@@ -565,9 +596,10 @@ const App: React.FC = () => {
         animalTheme={animalTheme}
         customApps={customApps}
         onLaunchCustomApp={handleLaunchCustomApp}
+        visibleIcons={visibleIcons}
       />
 
-      {isRegistryOpen && <RegistryWindow settings={settings} onUpdateSettings={setSettings} onClose={() => setIsRegistryOpen(false)} onFullReset={handleFullReset} />}
+      {isRegistryOpen && <RegistryWindow settings={settings} onUpdateSettings={setSettings} onClose={() => setIsRegistryOpen(false)} onFullReset={handleFullReset} onSetDeleteMode={setIsDeleteMode} />}
       
       {isDeleteMode && (
           <div className="absolute top-4 right-20 bg-red-600 text-white px-4 py-2 rounded-full font-black text-xs animate-bounce shadow-xl flex items-center gap-2 z-[200]">
@@ -644,8 +676,7 @@ const App: React.FC = () => {
       {isDSODOpen && <DSODApp onClose={() => setIsDSODOpen(false)} onWin={() => handleWin(2, 'DARK_CORE')} />}
       {dragons.map(dragon => <div key={dragon.id} className="absolute z-[100]" style={{ left: `${dragon.x}%`, top: `${dragon.y}%` }}><div className="text-red-500 font-bold bg-yellow-400 px-2 rounded-full border border-red-600 animate-bounce">🐉 DRAGON</div></div>)}
       {pets.map(pet => <DesktopPet key={pet.id} pet={pet} />)}
-      {/* Fixed: replaced setBossHealth with setBosdBossHealth */}
-      {appState !== AppState.CLOSED && <BOSDApp state={appState} onStateChange={setAppState} onWin={() => handleWin(1, 'BOSD_SHIELD')} onClose={() => setAppState(AppState.CLOSED)} unlockAchievement={unlockAchievement} difficulty={computerTier} clipboard={clipboard} canPaste={achievements.find(a => a.id === 'paint_face')?.unlocked || false} isLogsRecycled={isLogsRecycled || isGodMode} theme={theme} godMode={isGodMode} bossHealth={bosdBossHealth} setBossHealth={setBosdBossHealth} playerDamageOverride={(isGodMode ? 1000 : (isLogsRecycled ? 100 : 10)) * damageMultiplier} />}
+      {appState !== AppState.CLOSED && visibleIcons.bosd && <BOSDApp state={appState} onStateChange={setAppState} onWin={() => handleWin(1, 'BOSD_SHIELD')} onClose={() => setAppState(AppState.CLOSED)} unlockAchievement={unlockAchievement} difficulty={computerTier} clipboard={clipboard} canPaste={achievements.find(a => a.id === 'paint_face')?.unlocked || false} isLogsRecycled={isLogsRecycled || isGodMode} theme={theme} godMode={isGodMode} bossHealth={bosdBossHealth} setBossHealth={setBosdBossHealth} playerDamageOverride={(isGodMode ? 1000 : (isLogsRecycled ? 100 : 10)) * damageMultiplier} />}
       {status === GameStatus.PAINTING && <MSPaint onClose={() => setStatus(GameStatus.RUNNING)} onAchievement={() => unlockAchievement('paint_face')} isArtist={achievements.find(a => a.id === 'paint_face')?.unlocked || false} onSaveApp={(app) => { setCustomApps(prev => [...prev, app]); setStatus(GameStatus.RUNNING); }} />}
 
       <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 text-white font-mono flex flex-col items-end z-50">

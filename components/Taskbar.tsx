@@ -136,7 +136,10 @@ const Taskbar: React.FC<TaskbarProps> = ({ onSearchPaint, onCommand, onVolumeCli
         </button>
 
         <div className="flex items-center gap-3 text-white/70">
-          <Palette className="w-3 h-3 animate-bounce" title="Type 'bg' to change theme!" />
+          {/* Fix: Wrapped Palette icon in span with title attribute as Lucide icons do not support title prop directly */}
+          <span title="Type 'bg' to change theme!">
+            <Palette className="w-3 h-3 animate-bounce" />
+          </span>
           <Wifi className="w-3 h-3" />
           <button onClick={onVolumeClick} className="hover:text-white transition-colors p-1 rounded hover:bg-white/10">
             <Volume2 className="w-3 h-3" />

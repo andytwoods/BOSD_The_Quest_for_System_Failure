@@ -8,9 +8,10 @@ interface RegistryWindowProps {
   onUpdateSettings: (s: SystemSettings) => void;
   onClose: () => void;
   onFullReset: () => void;
+  onSetDeleteMode: (active: boolean) => void;
 }
 
-const RegistryWindow: React.FC<RegistryWindowProps> = ({ settings, onUpdateSettings, onClose, onFullReset }) => {
+const RegistryWindow: React.FC<RegistryWindowProps> = ({ settings, onUpdateSettings, onClose, onFullReset, onSetDeleteMode }) => {
   const [editingKey, setEditingKey] = useState(false);
 
   const handleKeyListen = (e: React.KeyboardEvent) => {
@@ -55,14 +56,8 @@ const RegistryWindow: React.FC<RegistryWindowProps> = ({ settings, onUpdateSetti
                 </p>
                 <button 
                   onClick={() => {
-                    // We trigger the same logic as cleaner.exe
-                    const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                    // Since App.tsx handles commands via Taskbar or search, 
-                    // we'll rely on the existing command logic. 
-                    // For direct access, we can assume the user will use search or we add a hidden command.
-                    // Instead, let's just alert them how to do it or rely on the Search bar.
-                    // Better yet: we use a custom event or just tell them.
-                    alert("To get rid of anything, type 'cleaner' in the Search Bar or Taskbar search!");
+                    onSetDeleteMode(true);
+                    onClose();
                   }}
                   className="w-full bg-slate-800 text-white p-2 rounded text-[10px] font-black uppercase hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
                 >

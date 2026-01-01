@@ -333,11 +333,16 @@ const TitanBSDBoss: React.FC<TitanBSDBossProps> = ({ onWin, onFail, computerTier
         {isUltra && (
           <div className="flex gap-4 mb-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <button key={i} disabled={i >= ultraBalls} onClick={useUltraBall} className={`p-2 rounded-full border-2 transition-all ${i < ultraBalls ? 'border-purple-500 bg-purple-900/40 text-purple-400 hover:scale-110 active:scale-90 shadow-[0_0_10px_purple]' : 'border-gray-700 bg-gray-900 text-gray-700 opacity-20'}`}>
-                <CircleDashed className={`w-8 h-8 ${i < ultraBalls ? 'animate-spin-slow' : ''}`} />
+              <button key={i} disabled={i >= ultraBalls} onClick={useUltraBall} className={`p-2 rounded-full border-2 transition-all ${i < ultraBalls ? 'border-purple-500 bg-purple-900/40 text-purple-400 hover:scale-110 active:scale-95 shadow-[0_0_10px_purple]' : 'border-gray-700 bg-gray-900 text-gray-700 opacity-20'}`}>
+                <CircleDashed className={`w-3 h-3 inline mr-1 ${isUltraBallActive ? 'animate-spin' : ''}`} />
               </button>
             ))}
-            {isUltra && <Zap className="w-8 h-8 text-yellow-400 animate-pulse" title="Ultracool Lightning Active" />}
+            {/* Fix: Wrapped Zap icon in span with title attribute as Lucide icons do not support title prop directly */}
+            {isUltra && (
+              <span title="Ultracool Lightning Active">
+                <Zap className="w-8 h-8 text-yellow-400 animate-pulse" />
+              </span>
+            )}
           </div>
         )}
 

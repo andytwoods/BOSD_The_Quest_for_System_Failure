@@ -31,13 +31,14 @@ interface DesktopProps {
   animalTheme: string | null;
   customApps: CustomApp[];
   onLaunchCustomApp: (app: CustomApp) => void;
+  visibleIcons: { [key: string]: boolean };
 }
 
 const Desktop: React.FC<DesktopProps> = ({ 
   onOpenApp, onOpenVirusExe, onOpenLogs, onOpenReadme, onOpenGoogle, onOpenAmazon, onOpenFiles, 
   hasRootAccess, onOpenWorkbench, onRecycleLogs, onRestoreLogs, onDeleteBin, onOpenBos, onOpenDSOD, 
   isLogsRecycled, isBinDeleted, isDeleteMode, onIconDelete, bosdCount, onRecycle, computerTier, theme, canBuildAV, onUltimateWin, 
-  animalTheme, customApps, onLaunchCustomApp 
+  animalTheme, customApps, onLaunchCustomApp, visibleIcons
 }) => {
   const isUltra = computerTier === ComputerTier.ULTRA;
   const canFinalWin = bosdCount >= 10 && isUltra;
@@ -89,35 +90,43 @@ const Desktop: React.FC<DesktopProps> = ({
         </div>
       )}
 
-      <div onClick={() => handleAction('readme', onOpenReadme)} className="flex flex-col items-center group cursor-pointer w-20">
-        <div className={`p-3 bg-white/10 rounded group-hover:bg-white/20 transition-all border border-transparent group-hover:border-white/30 ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
-          {renderIcon(Info, "text-blue-300")}
+      {visibleIcons.readme && (
+        <div onClick={() => handleAction('readme', onOpenReadme)} className="flex flex-col items-center group cursor-pointer w-20">
+          <div className={`p-3 bg-white/10 rounded group-hover:bg-white/20 transition-all border border-transparent group-hover:border-white/30 ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
+            {renderIcon(Info, "text-blue-300")}
+          </div>
+          <span className="text-white text-[10px] mt-2 text-center drop-shadow-md">README.txt</span>
         </div>
-        <span className="text-white text-[10px] mt-2 text-center drop-shadow-md">README.txt</span>
-      </div>
+      )}
 
-      <div onClick={() => handleAction('google', onOpenGoogle)} className="flex flex-col items-center group cursor-pointer w-20">
-        <div className={`p-3 bg-white/10 rounded group-hover:bg-white/20 transition-all border border-transparent group-hover:border-white/30 ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
-          {renderIcon(Globe, "text-blue-400")}
+      {visibleIcons.google && (
+        <div onClick={() => handleAction('google', onOpenGoogle)} className="flex flex-col items-center group cursor-pointer w-20">
+          <div className={`p-3 bg-white/10 rounded group-hover:bg-white/20 transition-all border border-transparent group-hover:border-white/30 ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
+            {renderIcon(Globe, "text-blue-400")}
+          </div>
+          <span className="text-white text-[10px] mt-2 text-center drop-shadow-md">Google</span>
         </div>
-        <span className="text-white text-[10px] mt-2 text-center drop-shadow-md">Google</span>
-      </div>
+      )}
 
-      <div onClick={() => handleAction('amazon', onOpenAmazon)} className="flex flex-col items-center group cursor-pointer w-20">
-        <div className={`p-3 bg-white/10 rounded group-hover:bg-white/20 transition-all border border-transparent group-hover:border-white/30 ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
-          {renderIcon(ShoppingCart, "text-orange-400")}
+      {visibleIcons.amazon && (
+        <div onClick={() => handleAction('amazon', onOpenAmazon)} className="flex flex-col items-center group cursor-pointer w-20">
+          <div className={`p-3 bg-white/10 rounded group-hover:bg-white/20 transition-all border border-transparent group-hover:border-white/30 ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
+            {renderIcon(ShoppingCart, "text-orange-400")}
+          </div>
+          <span className="text-white text-[10px] mt-2 text-center drop-shadow-md">Amazon.sys</span>
         </div>
-        <span className="text-white text-[10px] mt-2 text-center drop-shadow-md">Amazon.sys</span>
-      </div>
+      )}
 
-      <div onClick={() => handleAction('files', onOpenFiles)} className={`flex flex-col items-center group cursor-pointer w-20 ${!hasRootAccess ? 'opacity-20' : 'animate-pulse'}`}>
-        <div className={`p-3 rounded group-hover:bg-white/20 transition-all border border-transparent group-hover:border-white/30 ${hasRootAccess ? 'bg-purple-500/20' : 'bg-gray-500/20'} ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
-          {hasRootAccess ? renderIcon(Folder, "text-purple-400") : <Lock className="text-gray-500 w-8 h-8" />}
+      {visibleIcons.files && (
+        <div onClick={() => handleAction('files', onOpenFiles)} className={`flex flex-col items-center group cursor-pointer w-20 ${!hasRootAccess ? 'opacity-20' : 'animate-pulse'}`}>
+          <div className={`p-3 rounded group-hover:bg-white/20 transition-all border border-transparent group-hover:border-white/30 ${hasRootAccess ? 'bg-purple-500/20' : 'bg-gray-500/20'} ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
+            {hasRootAccess ? renderIcon(Folder, "text-purple-400") : <Lock className="text-gray-500 w-8 h-8" />}
+          </div>
+          <span className="text-white text-[10px] mt-2 text-center drop-shadow-md">Files.exe</span>
         </div>
-        <span className="text-white text-[10px] mt-2 text-center drop-shadow-md">Files.exe</span>
-      </div>
+      )}
 
-      {canBuildAV && (
+      {visibleIcons.workbench && canBuildAV && (
         <div onClick={() => handleAction('workbench', onOpenWorkbench)} className="flex flex-col items-center group cursor-pointer w-20 animate-in fade-in zoom-in duration-500">
           <div className={`p-3 bg-blue-500/20 rounded group-hover:bg-blue-500/40 border border-blue-500/30 group-hover:border-blue-500 shadow-lg ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
             {renderIcon(Hammer, "text-blue-400")}
@@ -126,7 +135,6 @@ const Desktop: React.FC<DesktopProps> = ({
         </div>
       )}
 
-      {/* Custom Created Apps */}
       {customApps.map(app => (
         <div 
           key={app.id} 
@@ -159,28 +167,34 @@ const Desktop: React.FC<DesktopProps> = ({
         </div>
       )}
 
-      <div onClick={() => handleAction('bosd', onOpenApp)} className="flex flex-col items-center group cursor-pointer w-20">
-        <div className={`p-3 bg-red-500/20 rounded group-hover:bg-red-500/40 transition-all border border-red-500/30 group-hover:border-red-500 shadow-lg ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
-          {renderIcon(ShieldAlert, "text-red-400")}
+      {visibleIcons.bosd && (
+        <div onClick={() => handleAction('bosd', onOpenApp)} className="flex flex-col items-center group cursor-pointer w-20">
+          <div className={`p-3 bg-red-500/20 rounded group-hover:bg-red-500/40 transition-all border border-red-500/30 group-hover:border-red-500 shadow-lg ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
+            {renderIcon(ShieldAlert, "text-red-400")}
+          </div>
+          <span className="text-white text-[10px] mt-2 text-center drop-shadow-md font-bold uppercase">BOSD.exe</span>
         </div>
-        <span className="text-white text-[10px] mt-2 text-center drop-shadow-md font-bold uppercase">BOSD.exe</span>
-      </div>
+      )}
 
-      <div onClick={() => handleAction('bos_terminal', onOpenBos)} className="flex flex-col items-center group cursor-pointer w-20">
-        <div className={`p-3 bg-zinc-800/40 rounded group-hover:bg-zinc-700/60 transition-all border border-zinc-500/30 group-hover:border-zinc-500 shadow-lg ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
-          {renderIcon(Terminal, "text-zinc-400")}
+      {visibleIcons.bos_terminal && (
+        <div onClick={() => handleAction('bos_terminal', onOpenBos)} className="flex flex-col items-center group cursor-pointer w-20">
+          <div className={`p-3 bg-zinc-800/40 rounded group-hover:bg-zinc-700/60 transition-all border border-zinc-500/30 group-hover:border-zinc-500 shadow-lg ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
+            {renderIcon(Terminal, "text-zinc-400")}
+          </div>
+          <span className="text-zinc-400 text-[10px] mt-2 text-center drop-shadow-md font-bold uppercase">bos.exe</span>
         </div>
-        <span className="text-zinc-400 text-[10px] mt-2 text-center drop-shadow-md font-bold uppercase">bos.exe</span>
-      </div>
+      )}
 
-      <div onClick={() => handleAction('dsod', onOpenDSOD)} className="flex flex-col items-center group cursor-pointer w-20">
-        <div className={`p-3 bg-green-500/20 rounded hover:bg-green-500/40 border border-green-500/30 hover:border-green-500 transition-all ${isDeleteMode ? 'hover:bg-red-500/40 border-red-500' : ''}`}>
-          {renderIcon(Heart, "text-green-400")}
+      {visibleIcons.dsod && (
+        <div onClick={() => handleAction('dsod', onOpenDSOD)} className="flex flex-col items-center group cursor-pointer w-20">
+          <div className={`p-3 bg-green-500/20 rounded hover:bg-green-500/40 border border-green-500/30 hover:border-green-500 transition-all ${isDeleteMode ? 'hover:bg-red-500/40 border-red-500' : ''}`}>
+            {renderIcon(Heart, "text-green-400")}
+          </div>
+          <span className="text-green-400 text-[10px] mt-2 text-center drop-shadow-md font-bold uppercase">DSOD.exe</span>
         </div>
-        <span className="text-green-400 text-[10px] mt-2 text-center drop-shadow-md font-bold uppercase">DSOD.exe</span>
-      </div>
+      )}
 
-      {bosdCount >= 20 && (
+      {visibleIcons.virus && bosdCount >= 20 && (
         <div onClick={() => handleAction('virus', onOpenVirusExe)} className="flex flex-col items-center group cursor-pointer w-20 animate-pulse">
           <div className={`p-3 bg-green-900/40 rounded group-hover:bg-green-600/40 border border-green-500/30 group-hover:border-green-500 shadow-lg ${isDeleteMode ? 'group-hover:bg-red-500/40 border-red-500' : ''}`}>
             {renderIcon(Bug, "text-green-400")}
