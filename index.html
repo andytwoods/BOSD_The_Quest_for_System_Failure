@@ -27,7 +27,7 @@
     "react": "https://esm.sh/react@19.0.0",
     "react-dom": "https://esm.sh/react-dom@19.0.0",
     "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "lucide-react": "https://esm.sh/lucide-react@0.473.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.473.0?deps=react@19.0.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/"
   }
@@ -37,34 +37,59 @@
 <body>
     <div id="root"></div>
     <script type="text/javascript">
-        // The Component Loader: Fetches TSX files as text, transpiles them,
-        // and creates a local Blob URL to bypass MIME type enforcement.
-        async function loadComponent(url) {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`Failed to fetch ${url}`);
-            const code = await response.text();
-            
-            // Transpile TSX to JS using Babel
-            const transformed = Babel.transform(code, {
-                presets: ['typescript', 'react'],
-                filename: url
-            }).code;
+        /**
+         * RECURSIVE_MODULE_VIRTUALIZER v3.1
+         * Fixes: React version conflicts (forwardRef error) and local import resolution.
+         */
+        const moduleCache = new Map();
 
-            // Convert to a Blob URL so the browser treats it as a module
-            const blob = new Blob([transformed], { type: 'application/javascript' });
-            return URL.createObjectURL(blob);
+        async function loadModule(relPath, baseUrl) {
+            const absUrl = new URL(relPath, baseUrl).href;
+            if (moduleCache.has(absUrl)) return moduleCache.get(absUrl);
+            
+            // Mark as loading
+            moduleCache.set(absUrl, null);
+
+            const response = await fetch(absUrl);
+            if (!response.ok) throw new Error(`Fetch failed: ${absUrl} (${response.status})`);
+            let source = await response.text();
+
+            /**
+             * Only intercept local relative imports (starts with ./ or ../)
+             * External libs like 'react' or 'lucide-react' are handled by the importmap.
+             */
+            const localImportRegex = /from\s+['"](\.\.?\/[^'"]+\.(?:tsx?|ts|js))['"]/g;
+            const matches = Array.from(source.matchAll(localImportRegex));
+            
+            // Process unique local dependencies
+            const uniqueImports = [...new Set(matches.map(m => m[1]))];
+            for (const subPath of uniqueImports) {
+                const subBlobUrl = await loadModule(subPath, absUrl);
+                source = source.split(subPath).join(subBlobUrl);
+            }
+
+            // Transpile TSX to JS
+            const { code } = Babel.transform(source, {
+                presets: ['typescript', 'react'],
+                filename: absUrl
+            });
+
+            const blob = new Blob([code], { type: 'application/javascript' });
+            const blobUrl = URL.createObjectURL(blob);
+            moduleCache.set(absUrl, blobUrl);
+            return blobUrl;
         }
 
         async function boot() {
             try {
-                // 1. Load the main App component
-                const appUrl = await loadComponent('./App.tsx');
-                
-                // 2. Inline index.tsx logic using the transformed App URL
+                // 1. Resolve and transpile the main App.tsx (and its entire local sub-tree)
+                const appBlobUrl = await loadModule('./App.tsx', window.location.href);
+
+                // 2. Inline Entry Point logic
                 const entryCode = `
                     import React from 'react';
                     import { createRoot } from 'react-dom/client';
-                    import App from '${appUrl}';
+                    import App from '${appBlobUrl}';
 
                     const rootElement = document.getElementById('root');
                     if (rootElement) {
@@ -77,24 +102,28 @@
                     }
                 `;
 
-                const transformedEntry = Babel.transform(entryCode, {
+                const transpiledEntry = Babel.transform(entryCode, {
                     presets: ['typescript', 'react'],
                     filename: 'entry.tsx'
                 }).code;
 
                 const script = document.createElement('script');
                 script.type = 'module';
-                script.text = transformedEntry;
+                script.text = transpiledEntry;
                 document.head.appendChild(script);
 
             } catch (err) {
-                console.error('System Boot Failure:', err);
+                console.error('SYSTEM_BOOT_FAILURE:', err);
                 document.getElementById('root').innerHTML = `
-                    <div style="color: #60a5fa; background: #000; height: 100vh; padding: 40px; font-family: monospace;">
-                        <h1 style="color: #ef4444; font-size: 4rem;">:(</h1>
-                        <h2 style="font-size: 1.5rem; margin-top: 20px;">SYSTEM_BOOT_FAILURE</h2>
-                        <p style="margin-top: 10px; opacity: 0.7;">${err.message}</p>
-                        <p style="margin-top: 40px; font-size: 0.8rem; color: #94a3b8;">Check the browser console for kernel logs.</p>
+                    <div style="background:#0078d7;color:white;height:100vh;width:100vw;padding:40px;font-family:sans-serif;box-sizing:border-box;">
+                        <h1 style="font-size:6rem;margin-bottom:20px;">:(</h1>
+                        <h2 style="font-weight:bold;margin-bottom:10px;">SYSTEM_BOOT_FAILURE</h2>
+                        <pre style="font-family:monospace;background:rgba(0,0,0,0.2);padding:15px;border-radius:4px;overflow:auto;max-width:100%;font-size:0.8rem;">
+${err.message}
+                        </pre>
+                        <p style="margin-top:30px;font-size:0.9rem;opacity:0.7;">
+                            Check console for full kernel logs. Ensure all component imports in App.tsx include the ".tsx" extension.
+                        </p>
                     </div>
                 `;
             }
